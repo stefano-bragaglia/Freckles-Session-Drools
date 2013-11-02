@@ -1,0 +1,52 @@
+package ec;
+
+rule "In time meaningful sample (interleaving-safe)" 
+no-loop
+// salience ( Integer.MAX_VALUE - $t )
+when
+	$s: Sample( $f: fluent, $v: value )
+	$m: MVI( fluent == $f, this includes $s, value != $v ) 
+	not Sample( fluent == $f, this after $s )
+then
+	modify( $m ) {
+		setLength($s.getTime() - $m.getInit());
+	}
+	insert( new MVI($f, $v, $s.getTime(), Long.MAX_VALUE) );
+end
+
+rule "Delayed meaningful sample with no interleaving" 
+no-loop
+when
+	$s: Sample( $f: fluent, $v: value )
+	$m: MVI( fluent == $f, this includes $s, value != $v ) 
+	accumulate(
+		Sample( fluent == $f, this after $s, $tt: time ),
+		$t: min($tt) 
+	)
+	$e: MVI( fluent == $f, init == $t.longValue(), value == $v )
+then
+	modify( $m ) {
+		setLength($s.getTime() - $m.getInit()); 
+	}
+	modify( $e ) {
+		setInit($s.getTime());
+		setLength($e.getLength() + $t.longValue() - $s.getTime());
+	}
+end
+
+rule "Delayed meaningful sample with interleaving"
+no-loop 
+when
+	$s: Sample( $f: fluent, $v: value )
+	$m: MVI( fluent == $f, this includes $s, value != $v ) 
+	accumulate(
+		Sample( fluent == $f, this after $s, $tt: time ),
+		$t: min($tt) 
+	)
+	exists MVI( fluent == $f, init == $t.longValue(), value != $v )
+then
+	modify( $m ) {
+		setLength($s.getTime() - $m.getInit()); 
+	}
+	insert( new MVI($f, $v, $s.getTime(), $t.longValue() - $m.getInit()) );
+end

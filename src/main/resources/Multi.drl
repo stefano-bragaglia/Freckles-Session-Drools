@@ -1,0 +1,48 @@
+package ec;
+
+declare Fluent 
+end
+
+declare Event 
+	@role(event) 
+	@timestamp(time) 
+	// @expires(100ms)
+	value : Object 
+	time : long
+end
+
+declare Sample 
+	@role(event) 
+	@timestamp(time) 
+	fluent : Fluent 
+	value : Object 
+	time : long
+end
+
+declare MVI 
+	@role(event) 
+	@timestamp(init) 
+	@duration(length) 
+	fluent : Fluent 
+	value : Object 
+	init : long 
+	length : long
+end
+
+query holdsAt( Fluent $f, Object $v, long $t ) 
+	exists MVI( fluent == $f, value == $v, 
+		$i: init <= $t, $t - $i < length ) 
+end
+
+query holdsFor( Fluent $f, Object $v, long $ti, long $tt )
+	exists MVI( fluent == $f, value == $v, 
+		$ti <= $tt, 
+		$i: init <= $ti, $ti - $i < length,
+			init <= $tt, $tt - $i < length )
+end
+
+rule "Test"
+when
+then
+	System.out.println("I'm alive!");
+end
