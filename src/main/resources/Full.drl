@@ -1,5 +1,13 @@
 package ec;
 
+rule "print"
+salience Integer.MAX_VALUE
+when
+	$o: Object()
+then
+	System.out.println("- " + $o);
+end
+
 rule "In time meaningful sample (interleaving-safe)" 
 no-loop
 // salience ( Integer.MAX_VALUE - $t )
@@ -30,6 +38,8 @@ then
 	}
 	modify( $e ) {
 		setInit($s.getTime());
+	}
+	modify( $e ) {
 		setLength($e.getLength() + $t.longValue() - $s.getTime());
 	}
 end

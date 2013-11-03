@@ -1,11 +1,12 @@
 package ec;
 
-rule "In time meaningful sample" 
+rule "In time meaningful sample"
+no-loop
 when
 	$s: Sample( $f: fluent, $v: value )
 	$m: MVI( fluent == $f, this includes $s, value != $v ) 
 then
-	update( $m ) {
+	modify( $m ) {
 		setLength($s.getTime() - $m.getInit());
 	}
 	insert( new MVI($f, $v, $s.getTime(), Long.MAX_VALUE) );
