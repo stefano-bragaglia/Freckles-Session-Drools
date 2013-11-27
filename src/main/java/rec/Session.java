@@ -4,6 +4,7 @@
 package rec;
 
 import java.io.PrintStream;
+import java.util.Collection;
 import java.util.Map;
 
 import org.drools.KnowledgeBase;
@@ -27,7 +28,7 @@ public class Session {
 
 	private KnowledgeSessionConfiguration config;
 
-	private FactType event;
+	// private FactType event;
 
 	private StatefulKnowledgeSession session;
 
@@ -40,7 +41,7 @@ public class Session {
 					"Illegal 'config' in Session(KnowledgeBase, KnowledgeSessionConfiguration): " + config);
 		this.base = base;
 		this.config = config;
-		this.event = base.getFactType(PACKAGE, "Event");
+		// this.event = base.getFactType(PACKAGE, "Event");
 		assert invariant() : "Illegal state in Session(KnowledgeBase, KnowledgeSessionConfiguration)";
 	}
 
@@ -66,9 +67,12 @@ public class Session {
 		stream.println("--[ WM content ]--------------------------------------------------------------");
 		for (String type : TYPES)
 			stream.println(String.format("- %s(%d)", type, count(type)));
-		stream.println("------------------------------------------------------------------------------");
-		for (Object object : session.getObjects())
-			System.out.println("> " + object);
+		Collection<Object> objects = session.getObjects();
+		if (objects.size() > 0) {
+			stream.println("------------------------------------------------------------------------------");
+			for (Object object : session.getObjects())
+				System.out.println("> " + object);
+		}
 		stream.println("==============================================================================");
 		assert invariant() : "Illegal state in Session.dump()";
 	}
@@ -82,7 +86,7 @@ public class Session {
 	 * @return
 	 */
 	private boolean invariant() {
-		return (base != null && config != null && event != null);
+		return (base != null && config != null);
 	}
 
 	public boolean isRunning() {
@@ -91,26 +95,34 @@ public class Session {
 		return result;
 	}
 
-	public FactHandle notify(String name, Map<String, Object> values) {
+	public FactHandle notify(String name, Object value, Map<String, Object> params) {
 		if (null == name || (name = name.trim()).isEmpty())
 			throw new IllegalArgumentException(
-					"Illegal 'name' argument in Session.notify(String, Map<String, Object>): " + name);
-		if (null == values)
+					"Illegal 'name' argument in Session.notify(String, Object, Map<String, Object>): " + name);
+		if (null == value)
 			throw new IllegalArgumentException(
-					"Illegal 'values' argument in Session.notify(String, Map<String, Object>): " + values);
+					"Illegal 'value' argument in Session.notify(String, Object, Map<String, Object>): " + value);
+		if (null == params)
+			throw new IllegalArgumentException(
+					"Illegal 'values' argument in Session.notify(String, Object, Map<String, Object>): " + params);
 		FactHandle handle = null;
 		if (null != session)
 			try {
-				Object eventObj = event.newInstance();
-				event.set(eventObj, "values", values);
-				handle = session.insert(eventObj);
-				session.fireAllRules();
+				FactType type = base.getFactType(PACKAGE, name);
+				if (null != type) {
+					Object eventObj = type.newInstance();
+					type.set(eventObj, "value", value);
+					type.set(eventObj, "params", params);
+					handle = session.insert(eventObj);
+					session.fireAllRules();
+				} else
+					System.err.println("* Unexpected event '" + name + "' (ignored)");
 			} catch (InstantiationException e) {
 				e.printStackTrace();
 			} catch (IllegalAccessException e) {
 				e.printStackTrace();
 			}
-		assert invariant() : "Illegal state in Session.notify(String, Map<String, Object>)";
+		assert invariant() : "Illegal state in Session.notify(String, Object, Map<String, Object>)";
 		return handle;
 	}
 

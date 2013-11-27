@@ -20,12 +20,12 @@ public class App {
 		Builder builder = new Builder();
 		builder.setMode(Mode.FULL);
 		// This .drl is the file to be generated from the editor
-		builder.addResource("specific.drl");
+		// builder.addResource("specific.drl");
 
 		Session session = builder.build();
 		session.start();
 		// This event is defined in the above .drl
-		session.notify("MyEvent", new HashMap<String, Object>());
+		session.notify("MyEvent", new Integer(5), new HashMap<String, Object>());
 		session.dump(null);
 		session.stop();
 
