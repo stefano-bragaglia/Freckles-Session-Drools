@@ -1,4 +1,4 @@
-package ec;
+package rec.com;
 
 rule "In time meaningful sample"
 no-loop

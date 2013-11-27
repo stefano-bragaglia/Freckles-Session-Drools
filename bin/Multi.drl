@@ -1,4 +1,4 @@
-package ec;
+package rec.dom;
 
 declare Fluent 
 end

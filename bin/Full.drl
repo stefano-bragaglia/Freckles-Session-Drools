@@ -1,4 +1,4 @@
-package ec;
+package rec.dom;
 
 rule "print"
 salience Integer.MAX_VALUE
